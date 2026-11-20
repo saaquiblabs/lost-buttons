@@ -2,11 +2,19 @@
 
 <h1 align="center">Lost Buttons</h1>
 
+<p align="center">
+  <a href="https://github.com/saaquiblabs/lost-buttons/releases/latest"><img src="https://img.shields.io/github/v/release/saaquiblabs/lost-buttons?color=ff7a33" alt="Latest release"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/licence-MIT-1f2c5e" alt="MIT licence"></a>
+  <img src="https://img.shields.io/badge/macOS-12%2B-555" alt="macOS 12 or newer">
+</p>
+
 **Your mouse's side buttons, back on macOS.** Some mice have Back and Forward buttons that
 work on Windows and Linux but do nothing at all on a Mac. Lost Buttons finds them and makes
 them work. Free, open source, sends nothing anywhere. A Saaquib Labs tool. MIT.
 
 <p align="center"><img src="docs/img/lost-buttons.png" width="800" alt="The Lost Buttons icon, a cream mouse with two navy side buttons on a tangerine tile, beside browser Back and Forward arrows: button 4 goes Back, button 5 goes Forward."></p>
+
+**Needs:** macOS 12 Monterey or newer, Apple silicon or Intel, and [Homebrew](https://brew.sh).
 
 ## Set it up in two minutes
 
@@ -82,11 +90,11 @@ Finder, System Settings, Music, Notes and a few more) it sends ⌘[ / ⌘] inste
 | | |
 |---|---|
 | Opens | Only mice with unnamed buttons. Every other device is never opened. |
-| Idle cost | No polling. Wakes only when an affected mouse sends a report. About 5 MB memory, 0% CPU. [Measurements](docs/PERFORMANCE.md). |
+| Idle cost | No polling. Wakes only when an affected mouse sends a report. About 5 MB memory, 0% CPU. [Measurements](docs/PERFORMANCE.md). Only while it waits for a permission does it restart itself now and then (every 30 s at most), because macOS tells a running program about a new permission only when it starts. |
 | Network | None. There is no networking code. |
 | Admin rights | None. No kernel extension, no driver, no root process. Runs as you. |
-| Code | Three short Swift files ([`Sources/`](Sources)). Homebrew builds it from source on your Mac. |
-| Logs | One line when an affected mouse connects or disconnects. Never key or button contents. |
+| Code | About 1,000 lines of Swift, no dependencies ([`Sources/`](Sources)). Homebrew builds it from source on your Mac. |
+| Logs | One line when an affected mouse connects or disconnects. Never key or button contents. The menu reads a small status file the service keeps in your temporary folder: mouse names and whether each permission is on. |
 
 ### Permissions
 
@@ -126,7 +134,9 @@ brew services stop lost-buttons
 brew uninstall lost-buttons
 ```
 
-Then remove **Lost Buttons** from Input Monitoring and Accessibility in System Settings.
+Then remove **Lost Buttons** from Input Monitoring and Accessibility in System Settings (or run
+`tccutil reset ListenEvent com.saaquiblabs.lost-buttons` and the same with `Accessibility`).
+The only other thing it leaves is its log, `$(brew --prefix)/var/log/lost-buttons.log`.
 
 ## Build from source
 
@@ -139,7 +149,24 @@ make app                   # build/Lost Buttons.app (the same binary with a name
 ./build/lost-buttons doctor
 ```
 
+## Contributing
+
+Issues and pull requests are welcome, most of all reports of mice that need fixing: open a
+[mouse report](https://github.com/saaquiblabs/lost-buttons/issues/new?template=mouse.yml) with the output
+of `lost-buttons doctor --raw`. See [CONTRIBUTING.md](CONTRIBUTING.md) for how to build, test and send a
+change, and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for how we treat each other. Security problems:
+please report them privately, as [SECURITY.md](SECURITY.md) explains.
+
+## Acknowledgements
+
+- The idea of fixing mice one descriptor at a time comes from the Linux kernel's HID drivers, which
+  patch these mice model by model. No Linux code is used.
+- The `lost-buttons` menu's layout and keys follow [ccstatusline](https://github.com/sirmalloc/ccstatusline)'s
+  configuration menu (MIT). Its code is JavaScript, so none was copied; see [`Sources/Menu.swift`](Sources/Menu.swift).
+- [LinearMouse](https://github.com/linearmouse/linearmouse) for the many mice whose buttons macOS does see.
+
 ## Licence
 
-MIT © Najmush Saaquib. Issues and pull requests welcome, especially descriptors from mice
-that need fixing: [github.com/saaquiblabs/lost-buttons/issues](https://github.com/saaquiblabs/lost-buttons/issues).
+The code is MIT © Najmush Saaquib, see [LICENSE](LICENSE). The Lost Buttons name and icon are
+Saaquib Labs' and aren't covered by the MIT licence: please don't use them for a fork or another
+product.

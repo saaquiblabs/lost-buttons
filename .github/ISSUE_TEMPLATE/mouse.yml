@@ -1,0 +1,35 @@
+name: Mouse report
+description: A mouse whose side buttons still don't work, or one Lost Buttons fixed.
+labels: ["mouse"]
+body:
+  - type: input
+    id: mouse
+    attributes:
+      label: Mouse
+      description: Brand and model, and how it's connected (USB cable, USB receiver, Bluetooth).
+      placeholder: Kreo Chimera, USB cable
+    validations:
+      required: true
+  - type: dropdown
+    id: result
+    attributes:
+      label: What happens
+      options:
+        - Lost Buttons fixed it (please add it to the list)
+        - The side buttons still don't work
+        - Something else
+    validations:
+      required: true
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Output of `lost-buttons doctor --raw`
+      render: text
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: "`lost-buttons --version` and your macOS version"
+      placeholder: 0.4.4, macOS 15.3
