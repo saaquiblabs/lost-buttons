@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.3 — 2026-11-21
+
+- Fix: right after an upgrade, `lost-buttons start` sometimes needed running twice. It now
+  tries the second time by itself.
+
 ## 0.3.2 — 2026-11-21
 
 - Fix: after `brew upgrade`, macOS could still stop the new version from launching. macOS

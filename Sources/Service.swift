@@ -68,6 +68,22 @@ func startService() -> Int32 {
   if agent.status == .enabled {  // give launchd a moment, so the status line is the truth
     for _ in 0..<12 where !processRunning() { Thread.sleep(forTimeInterval: 0.25) }
   }
+  // Right after an upgrade, macOS sometimes still checks against the old signature, and a second
+  // round in a fresh process (the same as running `lost-buttons start` again) has always worked.
+  // Retrying inside this process didn't (tried 2026-11-21: 50 s of retries, still killed).
+  if agent.status == .enabled && !processRunning()
+    && ProcessInfo.processInfo.environment["LOST_BUTTONS_RETRY"] == nil,
+    let me = Bundle.main.executablePath {
+    log("macOS hasn't caught up with the new version yet; trying once more...")
+    Thread.sleep(forTimeInterval: 2)
+    let p = Process()
+    p.executableURL = URL(fileURLWithPath: me)
+    p.arguments = ["start"]
+    p.environment = ProcessInfo.processInfo.environment.merging(["LOST_BUTTONS_RETRY": "1"]) { $1 }
+    guard (try? p.run()) != nil else { return 1 }
+    p.waitUntilExit()
+    return p.terminationStatus
+  }
   log("Lost Buttons is \(describe(agent.status))")
   if agent.status == .requiresApproval { SMAppService.openSystemSettingsLoginItems() }
   return registered(agent.status) ? 0 : 1
