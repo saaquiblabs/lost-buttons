@@ -6,7 +6,7 @@ import AppKit
 import IOKit
 import IOKit.hid
 
-let version = "0.3.4"
+let version = "0.4.0"
 
 func log(_ s: String) { print(s); fflush(stdout) }
 
@@ -241,18 +241,10 @@ func doctor(raw: Bool) {
 // MARK: - main
 
 let args = Array(CommandLine.arguments.dropFirst())
-
-/// Opened from Finder (double-click): LaunchServices names the job after our bundle ID.
-let openedFromFinder = ProcessInfo.processInfo.environment["XPC_SERVICE_NAME"]?
-  .hasPrefix("application.com.saaquiblabs.lost-buttons") ?? false
-
 switch args.first {
-case nil where openedFromFinder: exit(startService())
+case nil where interactive: menu()
 case nil, "run": run()
-case let a? where a.hasPrefix("-psn_"): exit(startService())  // older macOS, opened from Finder
-case "start": exit(startService())
-case "stop": exit(stopService())
-case "status": printStatus()
+case let a? where a.hasPrefix("-psn_"): run()  // older macOS adds this when opened from Finder
 case "doctor": doctor(raw: args.contains("--raw"))
 case "--version", "-v": print(version)
 case "--help", "-h", "help":
@@ -260,9 +252,8 @@ case "--help", "-h", "help":
   Lost Buttons \(version): makes the mouse buttons macOS drops work again.
 
   usage:
-    lost-buttons start           run in the background now and at every login
-    lost-buttons stop            stop, and don't start at login
-    lost-buttons status          is it running?
+    lost-buttons                 a menu: start or stop, check your mice, open the permission settings
+    lost-buttons run             run in the foreground (`brew services start lost-buttons` does this)
     lost-buttons doctor [--raw]  check which connected mice have dropped buttons
     lost-buttons --version
   """)

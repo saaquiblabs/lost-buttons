@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.0 — 2026-11-21
+
+- **Back to `brew services start lost-buttons`.** 0.3's own login item looked nicer in Login Items,
+  but after every upgrade macOS blocked the new version from launching until `start` was run again,
+  sometimes more than once. Without an Apple Developer signature there was no reliable fix, and
+  `brew services` has never failed. Lost Buttons keeps its name and icon.
+- New: run `lost-buttons` on its own for a menu: whether it's running and which mice it fixes,
+  start or stop, check your mice, and open each permission setting.
+- **Used `lost-buttons start` in 0.3?** Run `lost-buttons stop` before upgrading, then
+  `brew services start lost-buttons`.
+
 ## 0.3.4 — 2026-11-21
 
 - Fix: right after an upgrade, `lost-buttons start` sometimes needed running again a few seconds

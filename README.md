@@ -21,12 +21,10 @@ brew install saaquiblabs/tap/lost-buttons
 **2. Start it.** This also makes it start by itself every time you log in:
 
 ```bash
-lost-buttons start
+brew services start lost-buttons
 ```
 
-macOS shows a notice: *"Lost Buttons" added a background item*. That's expected. It's listed
-under **System Settings → General → Login Items & Extensions**, with its icon, where you can switch
-it off at any time.
+macOS shows a notice that a background item was added. That's expected: it's Lost Buttons.
 
 **3. Plug in your mouse.** If it's one Lost Buttons can fix, macOS asks for two permissions.
 
@@ -37,12 +35,10 @@ it off at any time.
 **5. Try it.** In your browser, press the side buttons: Back and Forward should work. In Finder
 and Safari they work too.
 
-**6. Not working?** Check that it's running, and what your Mac sees:
+**6. Not working?** Run `lost-buttons` on its own. It opens a small menu that shows whether it's
+running and which mice it fixes, and can start it, check your mice, or open each permission setting.
 
-```bash
-lost-buttons status
-lost-buttons doctor
-```
+<p align="center"><img src="docs/img/menu.png" width="560" alt="The lost-buttons menu in Terminal: Lost Buttons 0.4.0, running, fixing K Chimera, then Stop, Check my mice, Allow Input Monitoring, Allow Accessibility, Quit."></p>
 
 ## Is my mouse affected?
 
@@ -99,29 +95,29 @@ Lost Buttons asks for nothing and does nothing.
 
 ```bash
 brew upgrade lost-buttons
-lost-buttons start
 ```
 
-`start` swaps the running copy for the new one. macOS sees each new build as a new program, so it
-may ask for the two permissions again: in Input Monitoring and Accessibility, remove the old
-**Lost Buttons** entry (select it, click −), then switch on the new one.
+Homebrew restarts it for you. macOS sees each new build as a new program, so it asks for the two
+permissions again: in Input Monitoring and Accessibility, remove the old **Lost Buttons** entry
+(select it, click −), then switch on the new one. (`lost-buttons` → *Allow Input Monitoring* /
+*Allow Accessibility* opens each page.)
 
-Coming from 0.2 or older, which ran as a Homebrew service? The same two commands: `start` stops
-the old service for you.
+**Used `lost-buttons start` from 0.3?** Run `lost-buttons stop` *before* upgrading, then
+`brew services start lost-buttons` after.
 
 ## Commands
 
 | | |
 |---|---|
-| `lost-buttons start` | Run in the background now and at every login |
-| `lost-buttons stop` | Stop, and don't start at login |
-| `lost-buttons status` | Is it running? |
+| `lost-buttons` | The menu: status, start/stop, check your mice, permission settings |
 | `lost-buttons doctor` | Which connected mice have dropped buttons (`--raw` adds the descriptors) |
+| `brew services start lost-buttons` | Run in the background now and at every login |
+| `brew services stop lost-buttons` | Stop, and don't start at login |
 
 ## Uninstall
 
 ```bash
-lost-buttons stop
+brew services stop lost-buttons
 brew uninstall lost-buttons
 ```
 
@@ -134,7 +130,7 @@ Needs the Xcode Command Line Tools (`xcode-select --install`).
 ```bash
 make test                  # descriptor parser tests
 make                       # build/lost-buttons
-make app                   # build/Lost Buttons.app (the same binary with a name, icon and login item)
+make app                   # build/Lost Buttons.app (the same binary with a name and icon)
 ./build/lost-buttons doctor
 ```
 
