@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.1 — 2026-11-20
+
+- Fix: the permission prompts and Login Items showed a gear and `lost-buttons` instead of the
+  Lost Buttons icon and name. Homebrew keeps the app outside `/Applications`, where macOS doesn't
+  register apps by itself; Lost Buttons now registers itself when it starts.
+
 ## 0.2.0 — 2026-11-20
 
 - Now ships as **Lost Buttons.app**, so macOS shows its name and icon in Login Items, the

@@ -6,7 +6,7 @@ import AppKit
 import IOKit
 import IOKit.hid
 
-let version = "0.2.0"
+let version = "0.2.1"
 
 func log(_ s: String) { print(s); fflush(stdout) }
 
@@ -181,8 +181,18 @@ func isAlreadyRunning() -> Bool {
   return fd < 0 || flock(fd, LOCK_EX | LOCK_NB) != 0
 }
 
+/// Homebrew keeps the app outside /Applications, where macOS doesn't register apps by itself.
+/// Unregistered, the permission prompts and Login Items show a gear and "lost-buttons" instead
+/// of our name and icon. Registering is quick and harmless to repeat, so do it at every start.
+func registerAppBundle() {
+  let url = Bundle.main.bundleURL
+  guard url.pathExtension == "app" else { return }
+  LSRegisterURL(url as CFURL, true)
+}
+
 func run() {
   if isAlreadyRunning() { log("Lost Buttons is already running."); exit(0) }
+  registerAppBundle()
   log("Lost Buttons \(version): watching for mice with hidden buttons")
   guard let port = IONotificationPortCreate(kIOMainPortDefault) else { log("IOKit unavailable"); exit(1) }
   CFRunLoopAddSource(CFRunLoopGetMain(), IONotificationPortGetRunLoopSource(port).takeUnretainedValue(), .defaultMode)
