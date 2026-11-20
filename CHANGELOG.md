@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.1 — 2026-11-21
+
+- Fix: after an upgrade, macOS could stop the new version from launching, because it still
+  expected the old version's signature. `lost-buttons start` now registers the new version afresh.
+- `lost-buttons start` now stops the old Homebrew service from 0.2 by itself, so upgrading is
+  `brew upgrade lost-buttons` then `lost-buttons start`.
+- `lost-buttons status` says when Lost Buttons is switched on but not actually running.
+
 ## 0.3.0 — 2026-11-21
 
 - **Start it with `lost-buttons start`** instead of `brew services start`. Lost Buttons now runs as
@@ -7,7 +15,7 @@
   Homebrew entry. New: `lost-buttons stop` and `lost-buttons status`.
 - After `brew upgrade`, run `lost-buttons start` again: it swaps the running copy for the new one.
 - **Upgrading from 0.2:** `brew services stop lost-buttons` first, then `lost-buttons start`.
-  (`start` says so if you forget.) macOS may ask for the two permissions once more.
+  macOS may ask for the two permissions once more.
 - Needs macOS 13 Ventura or newer (was 12).
 - README: a picture of what it does, upgrade steps and a list of commands.
 

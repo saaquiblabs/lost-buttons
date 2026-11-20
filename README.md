@@ -106,13 +106,8 @@ lost-buttons start
 may ask for the two permissions again: in Input Monitoring and Accessibility, remove the old
 **Lost Buttons** entry (select it, click −), then switch on the new one.
 
-**Coming from 0.2 or older**, which ran as a Homebrew service: stop that first, then start the new way.
-
-```bash
-brew services stop lost-buttons
-brew upgrade lost-buttons
-lost-buttons start
-```
+Coming from 0.2 or older, which ran as a Homebrew service? The same two commands: `start` stops
+the old service for you.
 
 ## Commands
 
