@@ -11,6 +11,12 @@
   needed); capture with `script` + `docs/img/source/ansi2html.py`.
 
 ## Where things are
+- **Done 2026-11-21:** 0.4.4 working on the owner's Mac (Chimera fixed, both permissions). GitHub
+  release page v0.4.4 (Latest). README: real menu screenshot, requirements, badges, acknowledgements,
+  contributing; CONTRIBUTING / SECURITY / CODE_OF_CONDUCT, mouse report form; private vulnerability
+  reporting on; repo topics set. Site PR najmushsaaquib/saaquiblabs#87 updated, **[HUMAN] merge it**.
+- Next project: claude-code-voice, something similar and better (native app). Reuse what 0.4.x
+  taught (below) and its notifier ADR 0003.
 - **0.4.4 released** (menu: icon, live status, r, Fix permissions, Show the app in Finder).
 - **0.4.0 released** (tag + `saaquiblabs/tap` formula) and running on the owner's Mac via
   `brew services`. Runs as `Lost Buttons.app` (name + icon). `lost-buttons` alone opens a terminal menu
