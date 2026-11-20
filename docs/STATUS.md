@@ -1,6 +1,17 @@
 # Status — 2026-11-21
 
+## Learned the hard way (keep)
+- macOS answers a running process from what it knew at start: a permission switched on later is not
+  seen until restart. The service restarts itself while waiting (5 s → 30 s backoff); menu `r` = now.
+- Every build is ad-hoc signed, so each upgrade is a new app to macOS: both permissions again, and
+  old builds leave same-named entries whose switches don't apply. Menu → Fix permissions runs
+  `tccutil reset ListenEvent|Accessibility com.saaquiblabs.lost-buttons` (needs the app registered).
+- The permission prompt shows once per build; after that only the settings page helps.
+- Test the menu with a fake service that holds the lock and writes the state file (no permissions
+  needed); capture with `script` + `docs/img/source/ansi2html.py`.
+
 ## Where things are
+- **0.4.4 released** (menu: icon, live status, r, Fix permissions, Show the app in Finder).
 - **0.4.0 released** (tag + `saaquiblabs/tap` formula) and running on the owner's Mac via
   `brew services`. Runs as `Lost Buttons.app` (name + icon). `lost-buttons` alone opens a terminal menu
   (Sources/Menu.swift): status, start/stop, check mice, open each permission setting.
