@@ -6,12 +6,36 @@
 work on Windows and Linux but do nothing at all on a Mac. Lost Buttons finds them and makes
 them work. Free, open source, sends nothing anywhere. A Saaquib Labs tool. MIT.
 
+## Set it up in two minutes
+
+**1. Install it.** Open Terminal and paste:
+
 ```bash
 brew install saaquiblabs/tap/lost-buttons
+```
+
+(No Homebrew yet? Get it from [brew.sh](https://brew.sh) first.)
+
+**2. Start it.** This also makes it start by itself every time you log in:
+
+```bash
 brew services start lost-buttons
 ```
 
-Then allow it twice when macOS asks (see [Permissions](#permissions)). That's it.
+**3. Plug in your mouse.** If it's one Lost Buttons can fix, macOS asks for two permissions.
+
+**4. Allow both.** Open **System Settings → Privacy & Security**, then:
+- **Input Monitoring**: switch on **Lost Buttons** (it reads the hidden buttons).
+- **Accessibility**: switch on **Lost Buttons** (it passes Back/Forward to your apps).
+
+**5. Try it.** In your browser, press the side buttons: Back and Forward should work. In Finder
+and Safari they work too.
+
+**6. Not working?** Check what your Mac sees:
+
+```bash
+lost-buttons doctor
+```
 
 ## Is my mouse affected?
 
@@ -48,7 +72,7 @@ Finder, System Settings, Music, Notes and a few more) it sends ⌘[ / ⌘] inste
 | | |
 |---|---|
 | Opens | Only mice with unnamed buttons. Every other device is never opened. |
-| Idle cost | No polling. Wakes only when an affected mouse sends a report. ~8 MB memory, 0% CPU. |
+| Idle cost | No polling. Wakes only when an affected mouse sends a report. About 5 MB memory, 0% CPU. [Measurements](docs/PERFORMANCE.md). |
 | Network | None. There is no networking code. |
 | Admin rights | None. No kernel extension, no driver, no root process. Runs as you. |
 | Code | Two short Swift files ([`Sources/`](Sources)). Homebrew builds it from source on your Mac. |
@@ -65,7 +89,8 @@ Both are in **System Settings → Privacy & Security**. If your Mac has no affec
 Lost Buttons asks for nothing and does nothing.
 
 > After `brew upgrade lost-buttons`, macOS may ask again: the new build is a new program as far
-> as macOS is concerned. Remove the old `lost-buttons` entries in both lists, then allow the new one.
+> as macOS is concerned. Remove the old entry in both lists (select it, click −), then switch on the
+> new **Lost Buttons**. Coming from 0.1.0, the old entry is called `lost-buttons`.
 
 ## Uninstall
 
@@ -74,7 +99,7 @@ brew services stop lost-buttons
 brew uninstall lost-buttons
 ```
 
-Then remove `lost-buttons` from Input Monitoring and Accessibility in System Settings.
+Then remove **Lost Buttons** from Input Monitoring and Accessibility in System Settings.
 
 ## Build from source
 
@@ -83,6 +108,7 @@ Needs the Xcode Command Line Tools (`xcode-select --install`).
 ```bash
 make test                  # descriptor parser tests
 make                       # build/lost-buttons
+make app                   # build/Lost Buttons.app (the same binary with a name and icon)
 ./build/lost-buttons doctor
 ```
 
