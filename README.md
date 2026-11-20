@@ -1,4 +1,6 @@
-# Lost Buttons
+<p align="center"><img src="docs/logo/lost-buttons-256.png" width="128" height="128" alt=""></p>
+
+<h1 align="center">Lost Buttons</h1>
 
 **Your mouse's side buttons, back on macOS.** Some mice have Back and Forward buttons that
 work on Windows and Linux but do nothing at all on a Mac. Lost Buttons finds them and makes
