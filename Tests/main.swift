@@ -102,6 +102,15 @@ let pushPop = bytes("""
 expect("push and pop", findHiddenButtons(pushPop),
        [HiddenButtons(reportID: 0, bitOffset: 3, count: 2, firstButton: 4)])
 
+// The real Kreo Chimera [248a:5b4a], captured with `lost-buttons doctor --raw`
+// (docs/descriptors/kreo-chimera-248a-5b4a.txt). Report 1 names buttons 1-3 but sends 5 bits;
+// its other reports (consumer, system control, vendor) must not show up as hidden buttons.
+let chimera = bytes("""
+  05010902a10185010901a1000509190129031500250175019505810275039501810105010930093116018026ff7f75109502810609381581257f750895018106c0c0050c0901a1018502751095011501268c0219012a8c028100c005010980a1018503098209810983150025011901290375019503810295058101c005010900a10185050600ff09011581257f75089507b102c005010900a10185070600ff09011581257f75089507b102c0
+  """)
+expect("real Kreo Chimera 248a:5b4a", findHiddenButtons(chimera),
+       [HiddenButtons(reportID: 1, bitOffset: 3, count: 2, firstButton: 4)])
+
 // Real descriptors from this MacBook (keyboard/trackpad helpers, headset): nothing to do.
 for hex in [
   "050c0901a101050c09cd09ea09e91500250195037501810295058105c0",
