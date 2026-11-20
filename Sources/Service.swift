@@ -22,9 +22,9 @@ func describe(_ status: SMAppService.Status) -> String {
   case .enabled:
     return processRunning()
       ? "running in the background, and starts at every login"
-      : "switched on, but macOS stopped it from launching. This happens when there is another copy\n"
-        + "of Lost Buttons.app with the same version (for example one you built yourself). Delete the\n"
-        + "other copy, then run `lost-buttons start` again."
+      : "switched on, but macOS stopped it from launching. Run `lost-buttons start` again. If that\n"
+        + "doesn't help, delete any other copy of Lost Buttons.app (for example one you built yourself)\n"
+        + "and try once more."
   case .requiresApproval:
     return "registered, but switched off in System Settings → General → Login Items & Extensions → "
       + "Allow in the Background. Switch Lost Buttons on there."
@@ -48,6 +48,7 @@ func startService() -> Int32 {
     try? FileManager.default.removeItem(at: oldBrewService)
     log("Stopped the Homebrew service from Lost Buttons 0.2; it starts the new way from now on.")
   }
+  forgetDeletedCopies()
   registerAppBundle()
   // Every build is signed ad hoc, so each upgrade has a new signature, and macOS kills a login item
   // whose signature differs from the one it recorded (OS_REASON_CODESIGNING). Registering afresh
@@ -72,16 +73,42 @@ func startService() -> Int32 {
   return registered(agent.status) ? 0 : 1
 }
 
+let lsregister = "/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework"
+  + "/Support/lsregister"
+
+/// macOS keeps its record of an app after the app's folder is deleted, and the background-item
+/// check can take the expected signature from such a record: after `brew upgrade`, from the old
+/// version's deleted Cellar folder. Then it kills the new version at launch (found 2026-11-21:
+/// `lsregister -u` on the deleted copies fixed it; `lsregister -gc` didn't). The public lookups
+/// (NSWorkspace, LSCopyApplicationURLsForBundleIdentifier) skip deleted copies, so read the
+/// database dump (about 1 s) and forget every Lost Buttons.app whose folder no longer exists.
+func forgetDeletedCopies() {
+  let dump = tool(lsregister, ["-dump", "Bundle"]).output
+  for line in dump.split(separator: "\n") where line.hasPrefix("path:") {
+    // path:                       /opt/homebrew/Cellar/lost-buttons/0.3.1/Lost Buttons.app (0x188c)
+    var path = line.dropFirst(5).trimmingCharacters(in: .whitespaces)
+    if let r = path.range(of: " (0x", options: .backwards) { path = String(path[..<r.lowerBound]) }
+    guard path.hasSuffix("/Lost Buttons.app"), !FileManager.default.fileExists(atPath: path) else { continue }
+    tool(lsregister, ["-u", path])
+  }
+}
+
 @discardableResult
-func launchctl(_ args: [String]) -> Int32 {
+func launchctl(_ args: [String]) -> Int32 { tool("/bin/launchctl", args).status }
+
+/// Runs a system tool and waits for it. Output is read before waiting, so a long dump can't block.
+@discardableResult
+func tool(_ path: String, _ args: [String]) -> (status: Int32, output: String) {
   let p = Process()
-  p.executableURL = URL(fileURLWithPath: "/bin/launchctl")
+  let out = Pipe()
+  p.executableURL = URL(fileURLWithPath: path)
   p.arguments = args
-  p.standardOutput = FileHandle.nullDevice
+  p.standardOutput = out
   p.standardError = FileHandle.nullDevice
-  guard (try? p.run()) != nil else { return -1 }
+  guard (try? p.run()) != nil else { return (-1, "") }
+  let data = out.fileHandleForReading.readDataToEndOfFile()
   p.waitUntilExit()
-  return p.terminationStatus
+  return (p.terminationStatus, String(decoding: data, as: UTF8.self))
 }
 
 /// Is a copy running? It holds the lock `run()` takes (isAlreadyRunning in main.swift).

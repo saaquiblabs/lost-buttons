@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.2 — 2026-11-21
+
+- Fix: after `brew upgrade`, macOS could still stop the new version from launching. macOS
+  remembers the old version's deleted folder; `lost-buttons start` now makes it forget those.
+
 ## 0.3.1 — 2026-11-21
 
 - Fix: after an upgrade, macOS could stop the new version from launching, because it still
