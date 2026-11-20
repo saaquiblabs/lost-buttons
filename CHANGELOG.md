@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.1 — 2026-11-21
+
+- The `lost-buttons` menu, redone: the app icon at the top, live status from the running copy
+  (which mice it's fixing, whether each permission is allowed), the next step already picked,
+  "needed" / "✓ allowed" beside each permission, and a full-screen view that leaves your
+  terminal as it was when you quit.
+- Asks for Accessibility as soon as it starts fixing a mouse, instead of at the first press, so
+  Lost Buttons is already in that list when you go to switch it on.
+
 ## 0.4.0 — 2026-11-21
 
 - **Back to `brew services start lost-buttons`.** 0.3's own login item looked nicer in Login Items,

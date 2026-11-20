@@ -6,7 +6,7 @@ import AppKit
 import IOKit
 import IOKit.hid
 
-let version = "0.4.0"
+let version = "0.4.1"
 
 func log(_ s: String) { print(s); fflush(stdout) }
 
@@ -143,12 +143,19 @@ func consider(_ service: io_service_t) {
     log("Disconnected: \(mouse.name)")
     IOHIDDeviceUnscheduleFromRunLoop(mouse.device, CFRunLoopGetMain(), CFRunLoopMode.defaultMode.rawValue)
     let id = mouse.id
-    DispatchQueue.main.async { fixed[id] = nil }  // free after this callback returns
+    DispatchQueue.main.async { fixed[id] = nil; writeState() }  // free after this callback returns
   }, context)
   IOHIDDeviceScheduleWithRunLoop(device, CFRunLoopGetMain(), CFRunLoopMode.defaultMode.rawValue)
 
   let buttons = runs.map { $0.count == 1 ? "\($0.firstButton)" : "\($0.firstButton)–\($0.firstButton + $0.count - 1)" }
   log("Fixing \(mouse.name): buttons \(buttons.joined(separator: ", "))")
+  // Ask for Accessibility now, not at the first press, so Lost Buttons is already in that list.
+  if !CGPreflightPostEventAccess(), !warnedAboutAccessibility {
+    warnedAboutAccessibility = true
+    CGRequestPostEventAccess()
+    log("Needs Accessibility permission to send button presses: System Settings → Privacy & Security → Accessibility")
+  }
+  writeState()
 }
 
 /// Asks for Input Monitoring once, then checks every 5 s until granted. Only runs while an
@@ -157,6 +164,7 @@ func waitForInputMonitoring() {
   guard permissionTimer == nil else { return }
   IOHIDRequestAccess(kIOHIDRequestTypeListenEvent)
   log("Needs Input Monitoring permission to read the buttons: System Settings → Privacy & Security → Input Monitoring")
+  writeState()
   permissionTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { timer in
     guard IOHIDCheckAccess(kIOHIDRequestTypeListenEvent) == kIOHIDAccessTypeGranted else { return }
     timer.invalidate()
@@ -164,6 +172,7 @@ func waitForInputMonitoring() {
     let services = waiting.values
     waiting = [:]
     for service in services { consider(service); IOObjectRelease(service) }
+    writeState()
   }
 }
 
@@ -200,6 +209,8 @@ func run() {
   IOServiceAddMatchingNotification(port, kIOFirstMatchNotification, IOServiceMatching(kIOHIDDeviceKey),
                                    { _, iterator in drain(iterator) }, nil, &iterator)
   drain(iterator)  // devices already connected; also arms the notification
+  answerStateRequests()
+  writeState()
   CFRunLoopRun()
 }
 
