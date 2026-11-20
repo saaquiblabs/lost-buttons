@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.2 — 2026-11-21
+
+- Menu: long hints wrap inside the frame instead of running past it.
+
 ## 0.4.1 — 2026-11-21
 
 - The `lost-buttons` menu, redone: the app icon at the top, live status from the running copy

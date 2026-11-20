@@ -38,7 +38,7 @@ and Safari they work too.
 **6. Not working?** Run `lost-buttons` on its own. It opens a small menu that shows whether it's
 running and which mice it fixes, and can start it, check your mice, or open each permission setting.
 
-<p align="center"><img src="docs/img/menu.png" width="560" alt="The lost-buttons menu in Terminal: Lost Buttons 0.4.0, running, fixing K Chimera, then Stop, Check my mice, Allow Input Monitoring, Allow Accessibility, Quit."></p>
+<p align="center"><img src="docs/img/menu.png" width="600" alt="The lost-buttons menu in a terminal: the Lost Buttons icon and name at the top, status (running, K Chimera waiting for Input Monitoring), then Stop, Allow Input Monitoring (needed), Allow Accessibility (needed), Check my mice and Quit."></p>
 
 ## Is my mouse affected?
 

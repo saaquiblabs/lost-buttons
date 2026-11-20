@@ -129,6 +129,16 @@ private func width(_ s: String) -> Int {
 
 private func pad(_ s: String, _ to: Int) -> String { s + String(repeating: " ", count: max(0, to - width(s))) }
 
+/// Plain text broken into lines of at most `to` characters, at spaces.
+private func wrap(_ s: String, _ to: Int) -> [String] {
+  var lines: [String] = [], current = ""
+  for word in s.split(separator: " ") {
+    if !current.isEmpty && current.count + 1 + word.count > to { lines.append(current); current = "" }
+    current += (current.isEmpty ? "" : " ") + word
+  }
+  return current.isEmpty ? lines : lines + [current]
+}
+
 // MARK: - the icon, in half-blocks
 
 /// The app icon as `rows` lines of "▀" characters: each one shows two pixels, the top one as the
@@ -306,7 +316,7 @@ private func draw(_ s: Status, _ list: [Item], at: Int) {
     row(pad(left, w - width(right) - 2) + right + "  ", highlight: i == at)
   }
   row("")
-  row("  \(muted)\(list[at].hint)\(reset)")
+  for l in wrap(list[at].hint, w - 4) { row("  \(muted)\(l)\(reset)") }
   row("")
   rule("├", "┤")
   let keys = "  \(cream)↑↓\(reset) \(muted)move\(reset)   \(cream)⏎\(reset) \(muted)choose\(reset)   \(cream)q\(reset) \(muted)quit\(reset)"

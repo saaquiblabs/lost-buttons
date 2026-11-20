@@ -6,7 +6,7 @@ import AppKit
 import IOKit
 import IOKit.hid
 
-let version = "0.4.1"
+let version = "0.4.2"
 
 func log(_ s: String) { print(s); fflush(stdout) }
 
