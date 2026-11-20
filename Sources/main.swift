@@ -6,7 +6,7 @@ import AppKit
 import IOKit
 import IOKit.hid
 
-let version = "0.1.0"
+let version = "0.2.0"
 
 func log(_ s: String) { print(s); fflush(stdout) }
 
@@ -174,7 +174,15 @@ func drain(_ iterator: io_iterator_t) {
   }
 }
 
+/// Only one copy may run, or every press would be sent twice (say, the brew service plus a
+/// double-clicked app). The lock is a per-user temp file; macOS releases it when we exit.
+func isAlreadyRunning() -> Bool {
+  let fd = open(NSTemporaryDirectory() + "lost-buttons.lock", O_CREAT | O_RDWR, 0o600)
+  return fd < 0 || flock(fd, LOCK_EX | LOCK_NB) != 0
+}
+
 func run() {
+  if isAlreadyRunning() { log("Lost Buttons is already running."); exit(0) }
   log("Lost Buttons \(version): watching for mice with hidden buttons")
   guard let port = IONotificationPortCreate(kIOMainPortDefault) else { log("IOKit unavailable"); exit(1) }
   CFRunLoopAddSource(CFRunLoopGetMain(), IONotificationPortGetRunLoopSource(port).takeUnretainedValue(), .defaultMode)
@@ -225,6 +233,7 @@ func doctor(raw: Bool) {
 let args = Array(CommandLine.arguments.dropFirst())
 switch args.first {
 case nil: run()
+case let a? where a.hasPrefix("-psn_"): run()  // older macOS adds this when opened from Finder
 case "doctor": doctor(raw: args.contains("--raw"))
 case "--version", "-v": print(version)
 case "--help", "-h", "help":
