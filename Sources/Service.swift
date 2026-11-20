@@ -68,18 +68,17 @@ func startService() -> Int32 {
   if agent.status == .enabled {  // give launchd a moment, so the status line is the truth
     for _ in 0..<12 where !processRunning() { Thread.sleep(forTimeInterval: 0.25) }
   }
-  // Right after an upgrade, macOS sometimes still checks against the old signature, and a second
-  // round in a fresh process (the same as running `lost-buttons start` again) has always worked.
-  // Retrying inside this process didn't (tried 2026-11-21: 50 s of retries, still killed).
-  if agent.status == .enabled && !processRunning()
-    && ProcessInfo.processInfo.environment["LOST_BUTTONS_RETRY"] == nil,
-    let me = Bundle.main.executablePath {
-    log("macOS hasn't caught up with the new version yet; trying once more...")
-    Thread.sleep(forTimeInterval: 2)
+  // Right after an upgrade (a new Cellar folder), macOS checks against the old signature for some
+  // seconds. A later round in a fresh process, the same as running `lost-buttons start` again, works.
+  // (Retrying inside one process didn't, 2026-11-21.) Up to 6 rounds, 5 s apart.
+  let round = Int(ProcessInfo.processInfo.environment["LOST_BUTTONS_ROUND"] ?? "") ?? 1
+  if agent.status == .enabled && !processRunning() && round < 7, let me = Bundle.main.executablePath {
+    if round == 1 { log("macOS hasn't caught up with the new version yet. Trying again (up to 30 s)...") }
+    Thread.sleep(forTimeInterval: 5)
     let p = Process()
     p.executableURL = URL(fileURLWithPath: me)
     p.arguments = ["start"]
-    p.environment = ProcessInfo.processInfo.environment.merging(["LOST_BUTTONS_RETRY": "1"]) { $1 }
+    p.environment = ProcessInfo.processInfo.environment.merging(["LOST_BUTTONS_ROUND": "\(round + 1)"]) { $1 }
     guard (try? p.run()) != nil else { return 1 }
     p.waitUntilExit()
     return p.terminationStatus

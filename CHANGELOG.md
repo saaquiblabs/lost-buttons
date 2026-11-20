@@ -1,9 +1,13 @@
 # Changelog
 
+## 0.3.4 — 2026-11-21
+
+- Fix: right after an upgrade, `lost-buttons start` sometimes needed running again a few seconds
+  later. It now keeps trying by itself for up to 30 seconds.
+
 ## 0.3.3 — 2026-11-21
 
-- Fix: right after an upgrade, `lost-buttons start` sometimes needed running twice. It now
-  tries the second time by itself.
+- Started retrying once after an upgrade; not long enough.
 
 ## 0.3.2 — 2026-11-21
 
