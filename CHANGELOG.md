@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.4 — 2026-11-21
+
+- Menu: Start after Stop works every time (it could mistake a stopped service for one restarting).
+- Fix permissions also starts Lost Buttons if it was stopped, so macOS asks straight away, and
+  works before macOS has registered the app.
+
 ## 0.4.3 — 2026-11-21
 
 - Fix: switching a permission on wasn't noticed until Lost Buttons restarted, so it kept saying

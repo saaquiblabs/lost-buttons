@@ -76,9 +76,9 @@ private struct Status {
       usleep(120_000)
       state = readState()
     }
-    let age = (try? FileManager.default.attributesOfItem(atPath: stateFile)[.modificationDate] as? Date)
-      .flatMap { $0 }.map { -$0.timeIntervalSinceNow } ?? .infinity
-    let restarting = !running && (state?.attempts ?? 0) > 0 && age < 45
+    // Not running but still loaded: launchd is about to start it again (it quit to re-check
+    // permissions). After `brew services stop` it's unloaded, so this is false.
+    let restarting = !running && serviceLoaded()
     return Status(running: running, restarting: restarting, state: running || restarting ? state : nil,
                   mice: devices().filter(\.affected).map(\.name))
   }
@@ -87,6 +87,18 @@ private struct Status {
   var accessibility: Bool? { state?.accessibility }
   var needsInputMonitoring: Bool { inputMonitoring == false && !mice.isEmpty }
   var needsAccessibility: Bool { accessibility == false && !mice.isEmpty }
+}
+
+/// Is Homebrew's service loaded in launchd (started, even if between two runs)?
+func serviceLoaded() -> Bool {
+  let p = Process()
+  p.executableURL = URL(fileURLWithPath: "/bin/launchctl")
+  p.arguments = ["print", "gui/\(getuid())/sh.brew.lost-buttons"]
+  p.standardOutput = FileHandle.nullDevice
+  p.standardError = FileHandle.nullDevice
+  guard (try? p.run()) != nil else { return false }
+  p.waitUntilExit()
+  return p.terminationStatus == 0
 }
 
 // MARK: - terminal
@@ -371,8 +383,9 @@ private func showApp() {
 /// Forgets every Lost Buttons entry in both lists (old builds leave their own, under the same
 /// name, and a switch can belong to an old one), restarts it, so macOS asks again for this build.
 private func fixPermissions(_ s: Status) {
+  LSRegisterURL(appURL() as CFURL, true)  // tccutil only knows bundle IDs macOS has registered
   for service in ["ListenEvent", "Accessibility"] { shell("tccutil reset \(service) \(bundleID)") }
-  if s.running || s.restarting { brewService("restart") }
+  brewService("restart")  // also starts it if it was stopped: a running copy is what asks
   showMessage("Permissions reset", [
     "  macOS has forgotten every Lost Buttons entry, old ones included.",
     "",
