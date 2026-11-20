@@ -6,6 +6,8 @@
 work on Windows and Linux but do nothing at all on a Mac. Lost Buttons finds them and makes
 them work. Free, open source, sends nothing anywhere. A Saaquib Labs tool. MIT.
 
+<p align="center"><img src="docs/img/lost-buttons.png" width="800" alt="The Lost Buttons icon, a cream mouse with two navy side buttons on a tangerine tile, beside browser Back and Forward arrows: button 4 goes Back, button 5 goes Forward."></p>
+
 ## Set it up in two minutes
 
 **1. Install it.** Open Terminal and paste:
@@ -19,8 +21,12 @@ brew install saaquiblabs/tap/lost-buttons
 **2. Start it.** This also makes it start by itself every time you log in:
 
 ```bash
-brew services start lost-buttons
+lost-buttons start
 ```
+
+macOS shows a notice: *"Lost Buttons" added a background item*. That's expected. It's listed
+under **System Settings → General → Login Items & Extensions**, with its icon, where you can switch
+it off at any time.
 
 **3. Plug in your mouse.** If it's one Lost Buttons can fix, macOS asks for two permissions.
 
@@ -31,9 +37,10 @@ brew services start lost-buttons
 **5. Try it.** In your browser, press the side buttons: Back and Forward should work. In Finder
 and Safari they work too.
 
-**6. Not working?** Check what your Mac sees:
+**6. Not working?** Check that it's running, and what your Mac sees:
 
 ```bash
+lost-buttons status
 lost-buttons doctor
 ```
 
@@ -75,7 +82,7 @@ Finder, System Settings, Music, Notes and a few more) it sends ⌘[ / ⌘] inste
 | Idle cost | No polling. Wakes only when an affected mouse sends a report. About 5 MB memory, 0% CPU. [Measurements](docs/PERFORMANCE.md). |
 | Network | None. There is no networking code. |
 | Admin rights | None. No kernel extension, no driver, no root process. Runs as you. |
-| Code | Two short Swift files ([`Sources/`](Sources)). Homebrew builds it from source on your Mac. |
+| Code | Three short Swift files ([`Sources/`](Sources)). Homebrew builds it from source on your Mac. |
 | Logs | One line when an affected mouse connects or disconnects. Never key or button contents. |
 
 ### Permissions
@@ -88,14 +95,38 @@ macOS asks for two, the first time an affected mouse is plugged in:
 Both are in **System Settings → Privacy & Security**. If your Mac has no affected mouse,
 Lost Buttons asks for nothing and does nothing.
 
-> After `brew upgrade lost-buttons`, macOS may ask again: the new build is a new program as far
-> as macOS is concerned. Remove the old entry in both lists (select it, click −), then switch on the
-> new **Lost Buttons**. Coming from 0.1.0, the old entry is called `lost-buttons`.
+## Upgrade
+
+```bash
+brew upgrade lost-buttons
+lost-buttons start
+```
+
+`start` swaps the running copy for the new one. macOS sees each new build as a new program, so it
+may ask for the two permissions again: in Input Monitoring and Accessibility, remove the old
+**Lost Buttons** entry (select it, click −), then switch on the new one.
+
+**Coming from 0.2 or older**, which ran as a Homebrew service: stop that first, then start the new way.
+
+```bash
+brew services stop lost-buttons
+brew upgrade lost-buttons
+lost-buttons start
+```
+
+## Commands
+
+| | |
+|---|---|
+| `lost-buttons start` | Run in the background now and at every login |
+| `lost-buttons stop` | Stop, and don't start at login |
+| `lost-buttons status` | Is it running? |
+| `lost-buttons doctor` | Which connected mice have dropped buttons (`--raw` adds the descriptors) |
 
 ## Uninstall
 
 ```bash
-brew services stop lost-buttons
+lost-buttons stop
 brew uninstall lost-buttons
 ```
 
@@ -108,7 +139,7 @@ Needs the Xcode Command Line Tools (`xcode-select --install`).
 ```bash
 make test                  # descriptor parser tests
 make                       # build/lost-buttons
-make app                   # build/Lost Buttons.app (the same binary with a name and icon)
+make app                   # build/Lost Buttons.app (the same binary with a name, icon and login item)
 ./build/lost-buttons doctor
 ```
 

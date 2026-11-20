@@ -32,7 +32,7 @@ the Activity Monitor window you'd use to see it.
 Find the process:
 
 ```bash
-P=$(pgrep -f "Lost Buttons.app/Contents/MacOS/lost-buttons"); echo $P
+P=$(pgrep -x lost-buttons); echo $P
 ```
 
 Total CPU time it has used so far (run before and after; the difference is the cost of the minute):

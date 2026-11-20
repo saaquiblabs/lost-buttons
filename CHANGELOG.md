@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.0 — 2026-11-21
+
+- **Start it with `lost-buttons start`** instead of `brew services start`. Lost Buttons now runs as
+  a proper macOS background item, so Login Items shows **Lost Buttons** with its icon, not a
+  Homebrew entry. New: `lost-buttons stop` and `lost-buttons status`.
+- After `brew upgrade`, run `lost-buttons start` again: it swaps the running copy for the new one.
+- **Upgrading from 0.2:** `brew services stop lost-buttons` first, then `lost-buttons start`.
+  (`start` says so if you forget.) macOS may ask for the two permissions once more.
+- Needs macOS 13 Ventura or newer (was 12).
+- README: a picture of what it does, upgrade steps and a list of commands.
+
 ## 0.2.1 — 2026-11-20
 
 - Fix: the permission prompts and Login Items showed a gear and `lost-buttons` instead of the

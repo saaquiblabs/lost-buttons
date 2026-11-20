@@ -15,12 +15,13 @@ build/tests: Sources/Descriptor.swift Tests/main.swift
 
 # The app bundle: same binary, plus a name and icon macOS shows in Login Items and Privacy lists.
 # Signed ad hoc (no Apple account needed) so the signature carries our bundle ID.
-app: build/lost-buttons Resources/Info.plist Resources/AppIcon.icns
+app: build/lost-buttons Resources/Info.plist Resources/AppIcon.icns Resources/com.saaquiblabs.lost-buttons.plist
 	rm -rf "$(APP)"
-	mkdir -p "$(APP)/Contents/MacOS" "$(APP)/Contents/Resources"
+	mkdir -p "$(APP)/Contents/MacOS" "$(APP)/Contents/Resources" "$(APP)/Contents/Library/LaunchAgents"
 	cp build/lost-buttons "$(APP)/Contents/MacOS/lost-buttons"
 	sed 's/@VERSION@/$(VERSION)/g' Resources/Info.plist > "$(APP)/Contents/Info.plist"
 	cp Resources/AppIcon.icns "$(APP)/Contents/Resources/AppIcon.icns"
+	cp Resources/com.saaquiblabs.lost-buttons.plist "$(APP)/Contents/Library/LaunchAgents/"
 	codesign --force --sign - --identifier $(BUNDLE_ID) "$(APP)"
 
 # Rebuilds Resources/AppIcon.icns from the logo PNGs (only needed when the logo changes).
