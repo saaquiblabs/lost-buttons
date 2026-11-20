@@ -24,4 +24,4 @@ for m in re.finditer(r'\x1b\[([0-9;?]*)([a-zA-Z])|([^\x1b]+)',raw):
         elif p==38 and ps[k+1]==2: fg='rgb(%d,%d,%d)'%tuple(ps[k+2:k+5]); k+=4
         elif p==48 and ps[k+1]==2: bg='rgb(%d,%d,%d)'%tuple(ps[k+2:k+5]); k+=4
         k+=1
-print('<html><body style="margin:0;background:#151A22;color:#E9E6DF"><pre style="font:15px/1.2 Menlo,monospace;padding:10px;margin:0">'+''.join(out)+'</pre></body></html>')
+print('<html><body style="margin:0;background:#151A22;color:#E9E6DF"><style>pre span{display:inline-block;height:19px;vertical-align:top}</style><pre style="font:15px/19px Menlo,monospace;padding:10px;margin:0">'+''.join(out)+'</pre></body></html>')
