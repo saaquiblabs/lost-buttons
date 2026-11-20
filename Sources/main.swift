@@ -6,7 +6,7 @@ import AppKit
 import IOKit
 import IOKit.hid
 
-let version = "0.4.2"
+let version = "0.4.3"
 
 func log(_ s: String) { print(s); fflush(stdout) }
 
@@ -19,15 +19,8 @@ let keyboardApps: Set<String> = [
   "com.apple.TV", "com.apple.Podcasts", "com.apple.Notes", "com.apple.helpviewer",
 ]
 
-var warnedAboutAccessibility = false
-
 /// Re-emits a button press. `button` is 1-based: 4 = Back, 5 = Forward.
 func post(button: Int, down: Bool) {
-  if !CGPreflightPostEventAccess(), !warnedAboutAccessibility {
-    warnedAboutAccessibility = true
-    CGRequestPostEventAccess()
-    log("Needs Accessibility permission to send button presses: System Settings → Privacy & Security → Accessibility")
-  }
   let source = CGEventSource(stateID: .hidSystemState)
   let app = NSWorkspace.shared.frontmostApplication?.bundleIdentifier ?? ""
   if button == 4 || button == 5, keyboardApps.contains(app) {
@@ -118,7 +111,15 @@ func consider(_ service: io_service_t) {
 
   guard IOHIDCheckAccess(kIOHIDRequestTypeListenEvent) == kIOHIDAccessTypeGranted else {
     if waiting[id] == nil { IOObjectRetain(service); waiting[id] = service }
-    waitForInputMonitoring()
+    if !askedForInputMonitoring {
+      askedForInputMonitoring = true
+      IOHIDRequestAccess(kIOHIDRequestTypeListenEvent)  // macOS shows its prompt once per build
+      if attempts == 0 {
+        log("Needs Input Monitoring permission to read the buttons: System Settings → Privacy & Security → Input Monitoring")
+      }
+    }
+    writeState()
+    waitForPermissions()
     return
   }
   guard let device = IOHIDDeviceCreate(kCFAllocatorDefault, service) else { return }
@@ -150,30 +151,60 @@ func consider(_ service: io_service_t) {
   let buttons = runs.map { $0.count == 1 ? "\($0.firstButton)" : "\($0.firstButton)–\($0.firstButton + $0.count - 1)" }
   log("Fixing \(mouse.name): buttons \(buttons.joined(separator: ", "))")
   // Ask for Accessibility now, not at the first press, so Lost Buttons is already in that list.
-  if !CGPreflightPostEventAccess(), !warnedAboutAccessibility {
-    warnedAboutAccessibility = true
-    CGRequestPostEventAccess()
-    log("Needs Accessibility permission to send button presses: System Settings → Privacy & Security → Accessibility")
+  if !CGPreflightPostEventAccess() {
+    if !askedForAccessibility {
+      askedForAccessibility = true
+      CGRequestPostEventAccess()
+      if attempts == 0 {
+        log("Needs Accessibility permission to send button presses: System Settings → Privacy & Security → Accessibility")
+      }
+    }
+    waitForPermissions()
   }
+  if !needsPermission() { attempts = 0 }
   writeState()
 }
 
-/// Asks for Input Monitoring once, then checks every 5 s until granted. Only runs while an
-/// affected mouse is plugged in and permission is missing; stops for good once granted.
-func waitForInputMonitoring() {
+// MARK: - waiting for permissions
+
+/// Under launchd (Homebrew's service) quitting means a restart: the service has KeepAlive.
+let underLaunchd = getppid() == 1
+var askedForInputMonitoring = false
+var askedForAccessibility = false
+/// Restarts in a row while waiting for a permission; carried over in the state file.
+var attempts = 0
+
+func needsPermission() -> Bool {
+  !waiting.isEmpty || (!fixed.isEmpty && !CGPreflightPostEventAccess())
+}
+
+/// macOS answers a running process from what it knew when that process started: switching a
+/// permission on later isn't seen. (Found 2026-11-21: the service kept getting "denied" for minutes
+/// after the owner switched Input Monitoring on; a restart saw it at once.) So while an affected
+/// mouse waits for a permission, the service quits after a pause and launchd starts a fresh copy:
+/// after 5 s, then 10, 20, and every 30 s at most. Costs nothing once permissions are in, or while
+/// no affected mouse is plugged in. The menu's "check again" (SIGUSR2) does it right away.
+func waitForPermissions() {
   guard permissionTimer == nil else { return }
-  IOHIDRequestAccess(kIOHIDRequestTypeListenEvent)
-  log("Needs Input Monitoring permission to read the buttons: System Settings → Privacy & Security → Input Monitoring")
-  writeState()
-  permissionTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { timer in
-    guard IOHIDCheckAccess(kIOHIDRequestTypeListenEvent) == kIOHIDAccessTypeGranted else { return }
-    timer.invalidate()
-    permissionTimer = nil
+  let delay = min(30, 5 * pow(2.0, Double(attempts)))
+  permissionTimer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { _ in recheckPermissions() }
+}
+
+func recheckPermissions() {
+  permissionTimer?.invalidate()
+  permissionTimer = nil
+  if IOHIDCheckAccess(kIOHIDRequestTypeListenEvent) == kIOHIDAccessTypeGranted, !waiting.isEmpty {
     let services = waiting.values
     waiting = [:]
     for service in services { consider(service); IOObjectRelease(service) }
-    writeState()
   }
+  guard needsPermission() else { attempts = 0; writeState(); return }
+  if underLaunchd {
+    attempts += 1
+    writeState()
+    exit(0)  // launchd starts a fresh copy, which gets macOS's current answer
+  }
+  waitForPermissions()  // run by hand in a terminal: keep looking; restart it if it never sees the change
 }
 
 func drain(_ iterator: io_iterator_t) {
@@ -201,8 +232,12 @@ func registerAppBundle() {
 
 func run() {
   if isAlreadyRunning() { log("Lost Buttons is already running."); exit(0) }
+  // Restarted while waiting for a permission? Then carry on counting, and don't log it all again.
+  if let last = readState(), last.version == version, !last.waiting.isEmpty || !last.accessibility {
+    attempts = last.attempts ?? 0
+  }
   registerAppBundle()
-  log("Lost Buttons \(version): watching for mice with hidden buttons")
+  if attempts == 0 { log("Lost Buttons \(version): watching for mice with hidden buttons") }
   guard let port = IONotificationPortCreate(kIOMainPortDefault) else { log("IOKit unavailable"); exit(1) }
   CFRunLoopAddSource(CFRunLoopGetMain(), IONotificationPortGetRunLoopSource(port).takeUnretainedValue(), .defaultMode)
   var iterator: io_iterator_t = 0
@@ -251,23 +286,42 @@ func doctor(raw: Bool) {
 
 // MARK: - main
 
-let args = Array(CommandLine.arguments.dropFirst())
-switch args.first {
-case nil where interactive: menu()
-case nil, "run": run()
-case let a? where a.hasPrefix("-psn_"): run()  // older macOS adds this when opened from Finder
-case "doctor": doctor(raw: args.contains("--raw"))
-case "--version", "-v": print(version)
-case "--help", "-h", "help":
+func printHelp() {
   print("""
   Lost Buttons \(version): makes the mouse buttons macOS drops work again.
 
   usage:
-    lost-buttons                 a menu: start or stop, check your mice, open the permission settings
-    lost-buttons run             run in the foreground (`brew services start lost-buttons` does this)
+    lost-buttons                 a menu: start or stop, permissions, check your mice
     lost-buttons doctor [--raw]  check which connected mice have dropped buttons
+    lost-buttons run             run in the foreground (`brew services start lost-buttons` does this)
     lost-buttons --version
   """)
+}
+
+/// Double-clicked in Finder: LaunchServices names the job after our bundle ID.
+let openedFromFinder = ProcessInfo.processInfo.environment["XPC_SERVICE_NAME"]?
+  .hasPrefix("application.com.saaquiblabs.lost-buttons") ?? false
+
+/// The app has no window of its own; opened from Finder, it shows the menu in Terminal.
+func openMenuInTerminal() {
+  guard let me = Bundle.main.executablePath else { exit(1) }
+  let p = Process()
+  p.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+  p.arguments = ["-a", "Terminal", me]
+  try? p.run()
+  p.waitUntilExit()
+}
+
+let args = Array(CommandLine.arguments.dropFirst())
+switch args.first {
+case nil where interactive: menu()
+case nil where openedFromFinder: openMenuInTerminal()
+case let a? where a.hasPrefix("-psn_"): openMenuInTerminal()  // older macOS adds this, from Finder
+case nil where underLaunchd, "run": run()  // no argument: the 0.2–0.4.0 service plist
+case nil: printHelp()
+case "doctor": doctor(raw: args.contains("--raw"))
+case "--version", "-v": print(version)
+case "--help", "-h", "help": printHelp()
 default:
   FileHandle.standardError.write("unknown command: \(args[0]) (try --help)\n".data(using: .utf8)!)
   exit(2)

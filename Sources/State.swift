@@ -14,6 +14,8 @@ struct ServiceState: Codable {
   var accessibility: Bool
   var fixing: [String]
   var waiting: [String]
+  /// Restarts in a row while waiting for a permission (main.swift, waitForPermissions).
+  var attempts: Int?
 }
 
 /// "K Chimera [248a:5b4a]" → "K Chimera"
@@ -27,7 +29,8 @@ func writeState() {
     inputMonitoring: IOHIDCheckAccess(kIOHIDRequestTypeListenEvent) == kIOHIDAccessTypeGranted,
     accessibility: CGPreflightPostEventAccess(),
     fixing: fixed.values.map { plainName($0.name) }.sorted(),
-    waiting: waiting.values.map { plainName(describe($0)) }.sorted())
+    waiting: waiting.values.map { plainName(describe($0)) }.sorted(),
+    attempts: attempts)
   guard let data = try? JSONEncoder().encode(state) else { return }
   try? data.write(to: URL(fileURLWithPath: stateFile), options: .atomic)
 }
@@ -37,13 +40,16 @@ func readState() -> ServiceState? {
   return try? JSONDecoder().decode(ServiceState.self, from: data)
 }
 
-private var askSource: DispatchSourceSignal?
+private var signalSources: [DispatchSourceSignal] = []
 
-/// The menu sends SIGUSR1 to get a fresh state (say, after Accessibility was just switched on).
+/// The menu sends SIGUSR1 to get a fresh state, and SIGUSR2 to check permissions again now
+/// (after you switched one on), instead of at the next scheduled check.
 func answerStateRequests() {
-  signal(SIGUSR1, SIG_IGN)
-  let source = DispatchSource.makeSignalSource(signal: SIGUSR1, queue: .main)
-  source.setEventHandler { writeState() }
-  source.resume()
-  askSource = source
+  for (sig, handler) in [(SIGUSR1, { writeState() }), (SIGUSR2, { recheckPermissions() })] {
+    signal(sig, SIG_IGN)
+    let source = DispatchSource.makeSignalSource(signal: sig, queue: .main)
+    source.setEventHandler(handler: handler)
+    source.resume()
+    signalSources.append(source)
+  }
 }

@@ -35,10 +35,17 @@ macOS shows a notice that a background item was added. That's expected: it's Los
 **5. Try it.** In your browser, press the side buttons: Back and Forward should work. In Finder
 and Safari they work too.
 
-**6. Not working?** Run `lost-buttons` on its own. It opens a small menu that shows whether it's
-running and which mice it fixes, and can start it, check your mice, or open each permission setting.
+Lost Buttons notices a permission you switch on within half a minute by itself.
 
-<p align="center"><img src="docs/img/menu.png" width="600" alt="The lost-buttons menu in a terminal: the Lost Buttons icon and name at the top, status (running, K Chimera waiting for Input Monitoring), then Stop, Allow Input Monitoring (needed), Allow Accessibility (needed), Check my mice and Quit."></p>
+**6. Not working?** Run `lost-buttons` on its own (or double-click the app). It opens a menu that
+shows what's going on and walks you to the fix:
+
+<p align="center"><img src="docs/img/menu.png" width="600" alt="The lost-buttons menu in a terminal: the Lost Buttons icon and name at the top; status: running, K Chimera, Back and Forward work; then Stop Lost Buttons, Allow Input Monitoring (allowed), Allow Accessibility (allowed), Check my mice, Show the app in Finder, Fix permissions and Quit."></p>
+
+- **Status**: running or not, and for each affected mouse whether Back and Forward work, or what it's waiting for.
+- **Allow Input Monitoring / Allow Accessibility**: opens the right settings page; each says *needed* or *✓ allowed*. Press **r** to check again right after switching one on.
+- **Show the app in Finder**: Homebrew keeps the app in a hidden folder. If Lost Buttons is missing from a permission list, drag it in from there.
+- **Fix permissions**: still *needed* after switching both on? Every build leaves its own entry under the same name, and the switch may belong to an old one. This clears them all so macOS asks again.
 
 ## Is my mouse affected?
 
@@ -98,9 +105,7 @@ brew upgrade lost-buttons
 ```
 
 Homebrew restarts it for you. macOS sees each new build as a new program, so it asks for the two
-permissions again: in Input Monitoring and Accessibility, remove the old **Lost Buttons** entry
-(select it, click −), then switch on the new one. (`lost-buttons` → *Allow Input Monitoring* /
-*Allow Accessibility* opens each page.)
+permissions again. Simplest: run `lost-buttons`, choose **Fix permissions**, and allow both prompts.
 
 **Used `lost-buttons start` from 0.3?** Run `lost-buttons stop` *before* upgrading, then
 `brew services start lost-buttons` after.
@@ -109,7 +114,7 @@ permissions again: in Input Monitoring and Accessibility, remove the old **Lost 
 
 | | |
 |---|---|
-| `lost-buttons` | The menu: status, start/stop, check your mice, permission settings |
+| `lost-buttons` | The menu: status, start/stop, permissions, check your mice, show the app |
 | `lost-buttons doctor` | Which connected mice have dropped buttons (`--raw` adds the descriptors) |
 | `brew services start lost-buttons` | Run in the background now and at every login |
 | `brew services stop lost-buttons` | Stop, and don't start at login |

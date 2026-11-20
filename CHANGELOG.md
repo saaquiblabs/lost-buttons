@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.4.3 — 2026-11-21
+
+- Fix: switching a permission on wasn't noticed until Lost Buttons restarted, so it kept saying
+  it needed Input Monitoring after you had allowed it. macOS answers a running program from what
+  it knew when it started; Lost Buttons now restarts itself while it waits (after 5 s, then up to
+  every 30 s), and only then. The menu's **r** checks again at once.
+- Menu: the real icon in Ghostty, kitty, iTerm2 and WezTerm (a clean text header elsewhere);
+  **r** to check again; **Fix permissions** (clears the old builds' entries so macOS asks
+  again); **Show the app in Finder**; *Check my mice* in the same framed style; fits small
+  windows; redraws only when something changes.
+- Double-clicking Lost Buttons.app opens the menu in Terminal.
+- `lost-buttons` with no terminal attached prints help instead of starting a second copy.
+
 ## 0.4.2 — 2026-11-21
 
 - Menu: long hints wrap inside the frame instead of running past it.
